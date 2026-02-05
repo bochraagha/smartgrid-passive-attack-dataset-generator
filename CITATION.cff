@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Smart Grid Passive Attack Benchmarking Dataset Generator"
+authors:
+  - family-names: "Al Agha"
+    given-names: "Bochra"
+    email: "baa76@mail.aub.edu"
+  - family-names: "Tajeddine"
+    given-names: "Razane"
+    email: "razane.tajeddine@aub.edu.lb"
+repository-code: ""
+license: "MIT"
+keywords:
+  - smart grid
+  - cybersecurity
+  - passive attack
+  - eavesdropping
+  - dataset generator
+  - federated learning
+  - graph neural networks
+  - time series

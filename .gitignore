@@ -1,0 +1,78 @@
+# =========================
+# Generated datasets (DO NOT COMMIT)
+# =========================
+Dataset/
+dataset/
+data/
+Data/
+outputs/
+output/
+results/
+Result/
+*.csv
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.npz
+
+# If you ever want to commit small example CSVs, put them under:
+# examples/   (and remove the *.csv line above)
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+*.whl
+pip-wheel-metadata/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+*.log
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# =========================
+# Jupyter / IPython
+# =========================
+.ipynb_checkpoints/
+*.ipynb
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/
+*.code-workspace
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# =========================
+# Optional: secrets (keep private)
+# =========================
+.env
+.env.*
+*.key
+*.pem
