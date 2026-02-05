@@ -1,15 +1,17 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software or the generated benchmark in academic work, please cite this repository."
 type: software
 title: "Smart Grid Passive Attack Benchmarking Dataset Generator"
 authors:
   - family-names: "Al Agha"
     given-names: "Bochra"
+    affiliation: "Department of Electrical and Computer Engineering, American University of Beirut (AUB), Beirut, Lebanon"
     email: "baa76@mail.aub.edu"
   - family-names: "Tajeddine"
     given-names: "Razane"
+    affiliation: "Department of Electrical and Computer Engineering, American University of Beirut (AUB), Beirut, Lebanon"
     email: "razane.tajeddine@aub.edu.lb"
-repository-code: ""
+repository-code: "https://github.com/bochraagha/smartgrid-passive-attack-dataset-generator"
 license: "MIT"
 keywords:
   - smart grid
@@ -17,6 +19,10 @@ keywords:
   - passive attack
   - eavesdropping
   - dataset generator
-  - federated learning
+  - wireless communications
+  - CSI
+  - SNR
+  - latency modeling
   - graph neural networks
+  - federated learning
   - time series
