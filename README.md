@@ -1,240 +1,128 @@
-# Smart Grid Passive Attack Benchmarking Dataset Generator
-**IEEE-aligned HAN / NAN / WAN Communication Layers**
+# SmartGrid Passive Attack Benchmarking Dataset Generator (HAN/NAN/WAN)
 
-This repository provides a **reproducible dataset generator** for benchmarking  
-**passive cyber-physical attacks** in smart grid communication networks.
-
-The generator simulates realistic **time-series communication data** for heterogeneous
-grid nodes across **HAN, NAN, and WAN layers**, capturing traffic behavior,
-channel dynamics, topology-aware interactions, and **subtle passive attack effects**.
-
-> This repository contains **generator code only**.  
-> Generated datasets are written to **local disk** and are intentionally excluded
-> from version control.
+Python script to generate a synthetic smart-grid communication dataset with HAN/NAN/WAN nodes, an IEEE-ish adjacency graph, complex Gauss–Markov (AR(1)) fading, literature-anchored shadowing/interference processes, and presence-only passive attack windows (shadow-loss + coherence drop). Outputs per-node (client) CSV files for train/val/test together with metadata, adjacency/weights, attack-window logs, and saved per-node z-score statistics.
 
 ---
 
-## Key Properties
+## Requirements
 
-### Passive attacks only (propagation-level)
-- No packet injection, spoofing, replay, or active manipulation.
-- Attacks manifest as **channel coherence degradation** and **additional path loss**,
-  indirectly affecting **SNR, PER, and latency**.
+- Python 3
+- `numpy`
+- `pandas`
 
-### Activity-gated labels and perturbations
-- Attack labels and perturbations are applied **only when `tx_count > 0`**.
-- Prevents unrealistic labeling during silent communication periods.
-
-### Leak-safe dataset splits
-- Independent random seeds for **train / validation / test** splits.
-- **Burn-in period** for AR / correlated processes (not exported).
-- **Z-score normalization fitted on train only**, then applied to val/test.
-
-### Topology-local attacks
-- Attacks affect **connected node groups** sampled from an IEEE-inspired adjacency.
-- Group size is configurable (default: **3–5 nodes**).
-
-### Shared environment correlation
-- Neighboring nodes may share correlated **shadowing and interference trends**
-  via global and layer-specific AR(1) processes.
-
-### Tech-specific PER and heavy-tailed latency
-- Technology-aware **PER vs. SNR curves**.
-- **Heavy-tailed latency spikes** driven by PER and filtered to form burst clusters.
-
----
-
-## Realism Choice: Option A (Latent Channel Components)
-
-The generator uses internal latent variables:
-- `shadow_db` (shadowing)
-- `interf_db` (interference)
-
-These are used to compute observable metrics but are **NOT exported as features**.
-Only physically plausible measurements (CSI, SNR, PER, latency) are exposed.
-
----
-
-## Repository Structure
-
-```
-
-.
-├── smartgrid_passive_attack_dataset.py
-├── README.md
-├── requirements.txt
-├── .gitignore
-
-```
-
----
-
-## Generated Outputs
-
-All outputs are written to a local directory (default: `Dataset/`).
-
-### Global files
-- `Dataset/metadata.csv`
-- `Dataset/metadata_ohe.csv`
-- `Dataset/network_adjacency.csv`
-- `Dataset/network_weights_W.csv`
-- `Dataset/reason_vocab.json`
-- `Dataset/attacks_windows_meta.csv`
-- `Dataset/config.json`
-
-### Per-client datasets
-- `Dataset/clients/client_nodeXX/train.csv`
-- `Dataset/clients/client_nodeXX/val.csv`
-- `Dataset/clients/client_nodeXX/test.csv`
-- `Dataset/clients/client_nodeXX/train_stats.json`
-
----
-
-## Exported Features
-
-Each CSV contains one row per `(node, t)`.
-
-### Core
-- `t`, `node`, `split`
-- `attack_label`
-- `tx_count`
-
-### Observable channel & traffic
-- `csi_amp`
-- `snr_db`
-- `packet_error`
-- `latency`
-- `latency_smooth`
-
-### Engineered temporal features
-- `csi_entropy`
-- `csi_drift`
-- `csi_skewness`
-- `csi_kurtosis`
-- `time_since_last_tx`
-
-### Topology-aware features
-- `avg_neighbor_snr_db`
-- `avg_neighbor_latency_smooth`
-- `avg_neighbor_csi_amp`
-- `avg_neighbor_packet_error`
-- `rho_like_snr_db`
-- `rho_like_latency_smooth`
-- `rho_like_csi_amp`
-- `rho_like_packet_error`
-
-### Normalized features
-- `z_*` versions of all major numeric features  
-  (z-score fitted on **train split only**)
-
----
-
-## Installation
-
-Create a `requirements.txt` file:
-
-```
-
-numpy
-pandas
-
-````
-
-Install dependencies:
-```bash
-pip install -r requirements.txt
-````
-
----
-
-## Usage
-
-Run the dataset generator:
-
-```bash
-python smartgrid_passive_attack_dataset.py
-```
-
-Upon completion, the script prints attack coverage diagnostics and writes
-the dataset to the local output directory.
+Optional (Colab only): `google.colab` for Drive mount.
 
 ---
 
 ## Configuration
 
-All parameters are defined in the `Config` dataclass, including:
+Edit the `Config` dataclass:
 
-* split lengths (`T_TRAIN`, `T_VAL`, `T_TEST`)
-* attack coverage target (`TARGET_ATTACK_FRAC`, enforced on ACTIVE rows)
-* attack window sizing and overlap rules
-* group size constraints
-* technology-specific channel and latency models
-* traffic generation logic
+- **Output**
+  - `OUT_DIR` (default: `/content/drive/MyDrive/Complex`)
+  - `OVERWRITE` (delete and recreate `OUT_DIR` if exists)
 
-The full configuration used for a run is saved to:
+- **Reproducibility**
+  - `SEED_BASE` (split seeds derived from this)
 
+- **Split lengths (per node)**
+  - `T_TRAIN`, `T_VAL`, `T_TEST`
+  - `BURN_IN` (not exported; stabilizes AR/Markov processes)
+  - `DT_SECONDS`
+
+- **Attack placement**
+  - `TARGET_ATTACK_FRAC` (target fraction over ACTIVE rows on eligible nodes)
+  - Windowing: `WIN_CORE_MIN`, `WIN_CORE_MAX`, `LEAD`, `TAIL`, `HYST`
+  - Group size: `GROUP_MIN`, `GROUP_MAX`
+  - `ALLOW_OVERLAP`, `UNIQUE_KEY`
+  - Activity constraints: `MIN_ACTIVE_FRAC_CORE`, `MIN_ACTIVE_FRAC_LABELED`, `ACTIVITY_RESAMPLE_TRIES`
+  - Eligible tech: `ATTACK_ELIGIBLE_TECH`
+
+- **Presence-only attack parameters**
+  - Shadow-loss mixture: `ATTACK_SHADOW_*`
+  - Coherence drop mixture: `ATTACK_KDROP_*`, mapping to surrogates via `ATTACK_ALPHA_*` and `ATTACK_SIGMA_*`
+  - Markov bad-state: `ATTACK_GE_*`, `ATTACK_BAD_*`
+  - Ramp: `RAMP_FRAC`
+  - WiFi reflection (optional): `WIFI_*`
+
+---
+
+## Nodes
+
+Nodes are defined in `NODES` as `(node_id, role, layer, tech)`:
+
+- HAN: SmartMeter (ZigBee/WiFi), Gateway (WiFi)
+- NAN: DER (LoRa), FeederRelay (PLC), Controller (LTE)
+- WAN: PMU (Fiber), SCADA (Fiber), AMIHeadend (LTE), SubstationGW (PLC)
+
+---
+
+## How to run
+
+Run the script end-to-end (Colab or local). The last lines execute generation:
+
+```python
+df_splits, df_meta = main(return_dfs=True)
+print("OUT_DIR:", cfg.OUT_DIR)
 ```
-Dataset/config.json
-```
+
+If using Colab + Drive, the script attempts to mount `/content/drive` automatically.
 
 ---
 
-## Attack Label Semantics
+## Output structure
 
-* `attack_label = 1` is assigned **only when `tx_count > 0`**.
-* Coverage is enforced per-node over **active rows only**.
-* Attack eligibility is technology-based (configurable).
-* Each attack window is documented with:
+`OUT_DIR/` contains:
 
-  * affected nodes
-  * time bounds
-  * attack strength parameters
-
-See:
-
-```
-Dataset/attacks_windows_meta.csv
-```
-
----
-
-## Reproducibility
-
-* Fixed base seed with split-specific offsets.
-* Burn-in prevents initialization artifacts.
-* All stochastic design choices are logged via configuration and metadata files.
+- `config.json` (full configuration)
+- `reason_vocab.json`
+- `metadata.csv` (node metadata)
+- `metadata_ohe.csv` (one-hot role/layer/tech)
+- `network_adjacency.csv` (adjacency matrix `A`)
+- `network_weights_W.csv` (row-stochastic mixing matrix `W`)
+- `attacks_windows_meta.csv` (attack windows + sampled parameters)
+- `clients/`
+  - `client_node{0..11}/`
+    - `train.csv`
+    - `val.csv`
+    - `test.csv`
+    - `train_stats.json` (per-node z-score statistics)
 
 ---
 
-## Intended Use
+## What each per-client CSV contains
 
-This dataset generator is suitable for:
+Each row corresponds to one `(t, node)`:
 
-* centralized machine learning baselines
-* topology-aware models (GCN, GAT, spatio-temporal models)
-* federated learning experiments using per-client splits
-
-When reporting results, users should clearly state:
-
-* activity-gated attack labeling
-* latent channel components not exposed
-* train-only normalization
-* topology-local passive attack model
-
----
-
-## License
-
-Choose one and add a `LICENSE` file:
-
-* **MIT License**
-* **Apache License 2.0**
+- **Indexing/labels**: `t`, `node`, `split`, `attack_label`, `tx_count`
+- **Channel/telemetry**: `csi_amp`, `snr_db`, `packet_error`, `latency`, `latency_smooth`, `shadow_db`, `interf_db`
+- **Phase (from complex channel)**: `phase_rad`, `phase_sin`, `phase_cos`, `dphase`
+- **Rolling/derived**: `csi_entropy`, `csi_drift`, `csi_skewness`, `csi_kurtosis`, `time_since_last_tx`
+- **Neighbor features** (via `W`): `avg_neighbor_*`, `rho_like_*`
+- **Sensitivity features**: `csi_db`, `dcsi_db`, `dsnr_db`, `snr_minus_csi_db`, `per_logit`, `dper_logit`, `lat_log`, `dlat_log`,
+  plus rolling autocorrelation/innovation and robust/MAD and quantile-spread features
+- **Z-scores**: `z_*` for the configured feature list (`z_cols`)
+- **CUSUM/EWMA**: `cusum_*` and `ewma_*` for selected z-score columns, and graph delta/energy terms when available
 
 ---
 
-## Citation
+## Z-score fitting (no leakage)
 
-If you use this generator in academic work, please cite the accompanying paper
-once available.
+Per-node z-score statistics are fitted using:
 
+- Split: **train only**
+- Rows: **`attack_label == 0`** and **`tx_count > 0`**
 
+Saved to:
+
+- `clients/client_node{node}/train_stats.json`
+
+Applied to train/val/test using those saved stats.
+
+---
+
+## Attack labeling
+
+- Attack windows are placed to target `TARGET_ATTACK_FRAC` over **ACTIVE** rows (`tx_count > 0`) on eligible technologies (`ATTACK_ELIGIBLE_TECH`).
+- Windows are created for connected node groups (size `GROUP_MIN..GROUP_MAX`) using the adjacency graph.
+- Attack window metadata and sampled parameters are stored in `attacks_windows_meta.csv`.
